@@ -76,6 +76,7 @@ namespace VPTwitch
 		/// </summary>
 		public void GetBroadcasterInfos()
 		{
+			broadcasterInfos = null;
 			User.GetClientUserInfos(this, OnBroadcasterInfosGet);
 		}
 
