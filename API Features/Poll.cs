@@ -99,7 +99,7 @@ namespace VPTwitch
 		//callbacks used by the user
 		private Action<Poll> _onUpdateFinished;
 		private Action<Poll> _onPollManuallyEndedFinished;
-
+		private JSONObject _lastError;
 		/// <summary>
 		/// creates a new poll
 		/// </summary>
@@ -146,7 +146,13 @@ namespace VPTwitch
 
 			//send the request
 			bHasOngoingRequest = true;
-			client.SendPostRequest("https://api.twitch.tv/helix/polls",json, OnCreateCompleted);
+			client.SendPostRequest("https://api.twitch.tv/helix/polls",json, OnCreateCompleted, OnError);
+		}
+
+		public void OnError(JSONObject error)
+		{
+			_lastError = error;
+			bHasOngoingRequest = false;
 		}
 
 		/// <summary>
@@ -163,12 +169,13 @@ namespace VPTwitch
 		/// updates a poll ; note, the poll can be over and the function will still work
 		/// </summary>
 		/// <returns> true if the update request could be launched, false otherwise </returns>
-		public bool Update(Action<Poll> onUpdateFinished = null)
+		public bool Update(Action<Poll> onUpdateFinished = null, Action<JSONObject> onError = null)
 		{
 			if (bHasOngoingRequest || !bStarted) return false;
+			onError += OnError;
 			_onUpdateFinished = onUpdateFinished;
 			bHasOngoingRequest = true;
-			_client.SendGetRequest("https://api.twitch.tv/helix/polls", OnUpdateCompleted, ("broadcaster_id", _client.broadcasterInfos.id), ("id", _sId));
+			_client.SendGetRequest("https://api.twitch.tv/helix/polls", OnUpdateCompleted, OnError, ("broadcaster_id", _client.broadcasterInfos.id), ("id", _sId));
 			return true;
 		}
 
@@ -176,12 +183,13 @@ namespace VPTwitch
 		/// manually ends a poll ; note : the results will be updated
 		/// </summary>
 		/// <returns> true if the end request could be launched, false otherwise </returns>
-		public bool End(Action<Poll> onPollManuallyEndedFinished = null)
+		public bool End(Action<Poll> onPollManuallyEndedFinished = null, Action<JSONObject> onError = null)
 		{
 			if (bHasOngoingRequest || !bStarted) return false;
+			onError += OnError;
 			_onPollManuallyEndedFinished = onPollManuallyEndedFinished;
 			bHasOngoingRequest = true;
-			_client.SendPatchRequest("https://api.twitch.tv/helix/polls", OnManualEndCompleted, 
+			_client.SendPatchRequest("https://api.twitch.tv/helix/polls", OnManualEndCompleted, onError,
 				("broadcaster_id", _client.broadcasterInfos.id), 
 				("id", _sId),
 				("status", "TERMINATED"));

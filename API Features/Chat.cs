@@ -16,12 +16,12 @@ namespace VPTwitch
         /// makes an announcement in the user's chat
         /// </summary>
         /// <param name="sText">over 500 characters will be truncated</param>
-        public static void MakeAnnouncement(this Client client, string sText, AnnouncementColor eColor = AnnouncementColor.primary, Action<JSONObject> onCompleted = null)
+        public static void MakeAnnouncement(this Client client, string sText, AnnouncementColor eColor = AnnouncementColor.primary, Action<JSONObject> onCompleted = null, Action<JSONObject> onError = null)
         {
             JSONObject json = new JSONObject();
             json.AddField("message", sText);
             json.AddField("color", eColor.ToString());
-            client.SendPostRequest("https://api.twitch.tv/helix/chat/announcements", json, onCompleted, ("broadcaster_id", client.broadcasterInfos.id), ("moderator_id", client.broadcasterInfos.id));
+            client.SendPostRequest("https://api.twitch.tv/helix/chat/announcements", json, onCompleted, onError, ("broadcaster_id", client.broadcasterInfos.id), ("moderator_id", client.broadcasterInfos.id));
         }
 
         public static TwitchIRC CreateTwitchIRCListener(this Client client)

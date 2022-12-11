@@ -17,6 +17,11 @@ namespace VPTwitch
 		protected Action<JSONObject> _onCompleted;
 
 		/// <summary>
+		/// called when the request returned an error
+		/// </summary>
+		protected Action<JSONObject> _onError;
+
+		/// <summary>
 		/// the request operation
 		/// </summary>
 		protected UnityWebRequestAsyncOperation _operation;
@@ -42,8 +47,34 @@ namespace VPTwitch
 		/// <param name="obj"></param>
 		protected void OnCompleted(AsyncOperation _)
 		{
-			_onCompleted?.Invoke(JSONObject.Create(sResult));
+			try
+			{
+				var json = JSONObject.Create(sResult);
+				//check if it's an error
+				if (json.HasField("error"))
+				{
+					_onError?.Invoke(json);
+				}
+				else
+				{
+					try
+					{
+						_onCompleted?.Invoke(json);
+					}
+					catch(Exception e)
+                    {
+						Debug.LogException(e);
+						Debug.Log(sResult);
+                    }
+				}
+			}
+			catch (Exception e)
+			{
+				Debug.LogException(e);
+				_onError?.Invoke(null);
+			}
 			_onCompleted = null;
+			_onError = null;
 		}
 
 		/// <summary>
@@ -84,14 +115,15 @@ namespace VPTwitch
 		/// <summary>
 		/// creates and starts a POST request
 		/// </summary>
-		public PostRequest(Client client, string sURL, JSONObject parameters, Action<JSONObject> onCompleted, params (string, string)[] queryParameters) : this(client, sURL, parameters.ToString(false), onCompleted, queryParameters) {}
+		public PostRequest(Client client, string sURL, JSONObject parameters, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters) : this(client, sURL, parameters.ToString(false), onCompleted, onError, queryParameters) {}
 
 		/// <summary>
 		/// creates and starts a POST request
 		/// </summary>
-		public PostRequest(Client client, string sURL, string sContents, Action<JSONObject> onCompleted, params (string, string)[] queryParameters)
+		public PostRequest(Client client, string sURL, string sContents, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters)
 		{
 			this._onCompleted = onCompleted;
+			this._onError = onError;
 
 			var uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(sContents));
 			sURL = AddQueryParameters(sURL, queryParameters);
@@ -112,9 +144,10 @@ namespace VPTwitch
 		/// creates and sends a PATCH request
 		/// </summary>
 		/// <param name="queryParameters">array of tuple parameters added to the URL</param>
-		public SimpleRequest(Client client, string sBaseURL, Action<JSONObject> onCompleted, string sType, params (string, string)[] queryParameters)
+		public SimpleRequest(Client client, string sBaseURL, Action<JSONObject> onCompleted, Action<JSONObject> onError, string sType, params (string, string)[] queryParameters)
 		{
 			this._onCompleted = onCompleted;
+			this._onError = onError;
 
 			string sURL = AddQueryParameters(sBaseURL, queryParameters);
 
@@ -138,8 +171,8 @@ namespace VPTwitch
 		/// creates and sends a GET request
 		/// </summary>
 		/// <param name="queryParameters">array of tuple parameters added to the URL</param>
-		public GetRequest(Client client, string sBaseURL, Action<JSONObject> onCompleted, params (string sKey, string sValue)[] queryParameters) 
-			: base (client, sBaseURL, onCompleted, "GET", queryParameters) {}
+		public GetRequest(Client client, string sBaseURL, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string sKey, string sValue)[] queryParameters) 
+			: base (client, sBaseURL, onCompleted, onError, "GET", queryParameters) {}
 	}
 
 	/// <summary>
@@ -151,8 +184,8 @@ namespace VPTwitch
 		/// creates and sends a PATCH request
 		/// </summary>
 		/// <param name="queryParameters">array of tuple parameters added to the URL</param>
-		public PatchRequest(Client client, string sBaseURL, Action<JSONObject> onCompleted, params (string, string)[] queryParameters)
-			: base(client, sBaseURL, onCompleted, "PATCH", queryParameters) {}
+		public PatchRequest(Client client, string sBaseURL, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters)
+			: base(client, sBaseURL, onCompleted, onError, "PATCH", queryParameters) {}
 	}
 
 
@@ -161,17 +194,17 @@ namespace VPTwitch
 	/// </summary>
 	public static class PostRequestExtension
 	{
-		public static PostRequest SendPostRequest(this Client client, string sUrl, JSONObject parameters, Action<JSONObject> onCompleted, params (string, string)[] queryParameters)
+		public static PostRequest SendPostRequest(this Client client, string sUrl, JSONObject parameters, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters)
 		{
-			return new PostRequest(client, sUrl, parameters, onCompleted, queryParameters);
+			return new PostRequest(client, sUrl, parameters, onCompleted, onError, queryParameters);
 		}
-		public static GetRequest SendGetRequest(this Client client, string sUrl, Action<JSONObject> onCompleted, params (string, string)[] queryParameters)
+		public static GetRequest SendGetRequest(this Client client, string sUrl, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters)
 		{
-			return new GetRequest(client, sUrl, onCompleted, queryParameters);
+			return new GetRequest(client, sUrl, onCompleted, onError, queryParameters);
 		}
-		public static PatchRequest SendPatchRequest(this Client client, string sUrl, Action<JSONObject> onCompleted, params (string, string)[] queryParameters)
+		public static PatchRequest SendPatchRequest(this Client client, string sUrl, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters)
 		{
-			return new PatchRequest(client, sUrl, onCompleted, queryParameters);
+			return new PatchRequest(client, sUrl, onCompleted, onError, queryParameters);
 		}
 	}
 }

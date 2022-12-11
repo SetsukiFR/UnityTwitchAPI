@@ -36,6 +36,7 @@ namespace VPTwitch
 		/// </summary>
 		public User broadcasterInfos { private set; get; } = null;
 
+		public JSONObject jsonLastError;
 
 		/// <summary>
 		/// do we have the user's infos? if not, use <see cref="GetBroadcasterInfos"/>
@@ -77,10 +78,15 @@ namespace VPTwitch
 		public void GetBroadcasterInfos()
 		{
 			broadcasterInfos = null;
-			User.GetClientUserInfos(this, OnBroadcasterInfosGet);
+			User.GetClientUserInfos(this, OnBroadcasterInfosGet, OnError);
 		}
 
-        private void OnBroadcasterInfosGet(User myself)
+		private void OnError(JSONObject obj)
+		{
+			jsonLastError = obj;
+		}
+
+		private void OnBroadcasterInfosGet(User myself)
         {
 			broadcasterInfos = myself;
         }
@@ -139,14 +145,14 @@ namespace VPTwitch
 		/// <summary>
 		/// gets the client's infos
 		/// </summary>
-		public static void GetClientUserInfos(Client client, Action<User> onUserGet)
+		public static void GetClientUserInfos(Client client, Action<User> onUserGet, Action<JSONObject> onError)
 		{
 			client.SendGetRequest("https://api.twitch.tv/helix/users", (JSONObject json)=>
             {
 				User user = new User();
 				user.ParseJSON(json);
 				onUserGet(user);
-            });
+            }, onError);
 		}
 
         public void ParseJSON(JSONObject obj)
