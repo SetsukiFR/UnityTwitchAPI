@@ -53,6 +53,9 @@ namespace VPTwitch
 				//check if it's an error
 				if (json.HasField("error"))
 				{
+#if UNITY_EDITOR
+					Debug.LogError(sResult);
+#endif
 					_onError?.Invoke(json);
 				}
 				else
@@ -110,17 +113,17 @@ namespace VPTwitch
 	/// <summary>
 	/// a POST request
 	/// </summary>
-	public class PostRequest : Request
+	public abstract class JSONRequest : Request
 	{
 		/// <summary>
 		/// creates and starts a POST request
 		/// </summary>
-		public PostRequest(Client client, string sURL, JSONObject parameters, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters) : this(client, sURL, parameters.ToString(false), onCompleted, onError, queryParameters) {}
+		public JSONRequest(Client client, string sURL, JSONObject parameters, Action<JSONObject> onCompleted, Action<JSONObject> onError, string sMethod, params (string, string)[] queryParameters) : this(client, sURL, parameters.ToString(false), sMethod, onCompleted, onError, queryParameters) {}
 
 		/// <summary>
 		/// creates and starts a POST request
 		/// </summary>
-		public PostRequest(Client client, string sURL, string sContents, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters)
+		public JSONRequest(Client client, string sURL, string sContents, string sMethod, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters)
 		{
 			this._onCompleted = onCompleted;
 			this._onError = onError;
@@ -129,7 +132,7 @@ namespace VPTwitch
 			sURL = AddQueryParameters(sURL, queryParameters);
 
 
-			var request = new UnityWebRequest(sURL, "POST", new DownloadHandlerBuffer(), uploadHandler);
+			var request = new UnityWebRequest(sURL, sMethod, new DownloadHandlerBuffer(), uploadHandler);
 
 
 			AddHeaders(request, client, true);
@@ -178,14 +181,40 @@ namespace VPTwitch
 	/// <summary>
 	/// a PATCH request
 	/// </summary>
-	public class PatchRequest : SimpleRequest
+	public class PatchRequest : JSONRequest
 	{
 		/// <summary>
 		/// creates and sends a PATCH request
 		/// </summary>
 		/// <param name="queryParameters">array of tuple parameters added to the URL</param>
-		public PatchRequest(Client client, string sBaseURL, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters)
-			: base(client, sBaseURL, onCompleted, onError, "PATCH", queryParameters) {}
+		public PatchRequest(Client client, string sBaseURL, JSONObject json, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters)
+			: base(client, sBaseURL, json, onCompleted, onError, "PATCH", queryParameters) { }
+	}
+
+	/// <summary>
+	/// a PATCH request
+	/// </summary>
+	public class PostRequest : JSONRequest
+	{
+		/// <summary>
+		/// creates and sends a POST request
+		/// </summary>
+		/// <param name="queryParameters">array of tuple parameters added to the URL</param>
+		public PostRequest(Client client, string sBaseURL, JSONObject json, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters)
+			: base(client, sBaseURL, json, onCompleted, onError, "POST", queryParameters) { }
+	}
+
+	/// <summary>
+	/// a DELETE request
+	/// </summary>
+	public class DeleteRequest : SimpleRequest
+	{
+		/// <summary>
+		/// creates and sends a PATCH request
+		/// </summary>
+		/// <param name="queryParameters">array of tuple parameters added to the URL</param>
+		public DeleteRequest(Client client, string sBaseURL, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters)
+			: base(client, sBaseURL, onCompleted, onError, "DELETE", queryParameters) { }
 	}
 
 
@@ -202,9 +231,13 @@ namespace VPTwitch
 		{
 			return new GetRequest(client, sUrl, onCompleted, onError, queryParameters);
 		}
-		public static PatchRequest SendPatchRequest(this Client client, string sUrl, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters)
+		public static PatchRequest SendPatchRequest(this Client client, string sUrl, JSONObject parameters, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters)
 		{
-			return new PatchRequest(client, sUrl, onCompleted, onError, queryParameters);
+			return new PatchRequest(client, sUrl, parameters, onCompleted, onError, queryParameters);
+		}
+		public static DeleteRequest SendDeleteRequest(this Client client, string sUrl, Action<JSONObject> onCompleted, Action<JSONObject> onError, params (string, string)[] queryParameters)
+		{
+			return new DeleteRequest(client, sUrl, onCompleted, onError, queryParameters);
 		}
 	}
 }
