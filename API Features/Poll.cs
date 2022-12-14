@@ -189,10 +189,14 @@ namespace VPTwitch
 			onError += OnError;
 			_onPollManuallyEndedFinished = onPollManuallyEndedFinished;
 			bHasOngoingRequest = true;
-			_client.SendPatchRequest("https://api.twitch.tv/helix/polls", OnManualEndCompleted, onError,
-				("broadcaster_id", _client.broadcasterInfos.id), 
-				("id", _sId),
-				("status", "TERMINATED"));
+
+			JSONObject json = new JSONObject();
+			json.AddField("broadcaster_id", _client.broadcasterInfos.id);
+			json.AddField("id", _sId);
+			json.AddField("status", "TERMINATED");
+
+			bHasOngoingRequest = true;
+			_client.SendPatchRequest("https://api.twitch.tv/helix/polls", json, OnManualEndCompleted, onError);
 			return true;
 		}
 
