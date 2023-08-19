@@ -32,7 +32,9 @@ if you get errors due to one of the libraries being already in your project, you
 Advertisement, Attributions and Thanks
 ---
 Check out my in development (or maybe released!) game Six Legends
+
 [On Itch.io](https://vincentpaquin.itch.io/sixlegends)
+
 [Social medias](https://sixlegendsgame.carrd.co/)
 
 Thanks to **TheHellCat** for TwitchOAuth
