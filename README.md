@@ -16,7 +16,7 @@ Use the **Examples.cs** file for a complete Twitch integration in a few lines.
 ---
 Tutorials
 ---
-For a detailed tutorial on the development and usage of this library, use the following playlist : [PLAYLIST NOT UPLOADED YET]
+For a detailed tutorial on the development and usage of this library, use the [Youtube Playlist](https://www.youtube.com/watch?v=ZxDK8nzY_VY&list=PLh7c7jPSkA835ApfkbYlGAfLr8pBE0aDJ).
 
 ---
 Maintenance, modification, redistribution
@@ -32,7 +32,8 @@ if you get errors due to one of the libraries being already in your project, you
 Advertisement, Attributions and Thanks
 ---
 Check out my in development (or maybe released!) game Six Legends
-https://vincentpaquin.itch.io/sixlegends
+[On Itch.io](https://vincentpaquin.itch.io/sixlegends)
+[Social medias](https://sixlegendsgame.carrd.co/)
 
 Thanks to **TheHellCat** for TwitchOAuth
 
